@@ -1,0 +1,3 @@
+# About Open Horizon CUI
+
+[Open Horizon](https://open-horizon.github.io/) is an open-source project for managing workload delivery to edge computing devices and clusters.  This CUI project creates a UI for an Open Horizon instance using the python library [py_cui](https://jwlodek.github.io/py_cui-docs/).  It was built with the [py_cui_cookiecutter](https://github.com/jwlodek/py_cui_cookiecutter) template.

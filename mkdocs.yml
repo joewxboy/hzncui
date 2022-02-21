@@ -1,0 +1,9 @@
+site_name: Open Horizon CUI Documentation
+repo_url: https://github.com/joewxboy/hzncui/
+copyright: 2022 - Joe Pearson
+nav:
+  - Home: index.md
+  - Installation: install.md
+  - Basic Usage: usage.md
+  - About: about.md
+theme: readthedocs

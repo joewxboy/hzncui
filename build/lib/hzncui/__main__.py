@@ -1,0 +1,3 @@
+import hzncui
+
+hzncui.main()
