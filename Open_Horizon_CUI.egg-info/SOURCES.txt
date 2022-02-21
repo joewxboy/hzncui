@@ -1,4 +1,5 @@
 AUTHORS
+LICENSE
 README.md
 setup.py
 Open_Horizon_CUI.egg-info/PKG-INFO

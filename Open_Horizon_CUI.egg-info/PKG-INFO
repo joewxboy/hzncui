@@ -15,6 +15,7 @@ Classifier: Programming Language :: Python :: 3.7
 Classifier: Programming Language :: Python :: 3.8
 Description-Content-Type: text/markdown
 Provides-Extra: test
+License-File: LICENSE
 License-File: AUTHORS
 
 # Open Horizon CUI
