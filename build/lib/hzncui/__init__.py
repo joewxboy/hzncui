@@ -39,8 +39,10 @@ class hzncuiApp:
         # create a list of IDs from the list of edge node dicts
 
         lid = []
+        nodeArray = {}
         for d in data:
             lid.append(d["id"])
+            nodeArray[d["id"]] = d
 
         # put the list of IDs into the node details CUI widget
 
@@ -49,7 +51,15 @@ class hzncuiApp:
         # create the detail box
 
         current_node = self.secondary_menu.get()
-        self.detail_box = self.parent.add_block_label(f'3. Details for node {current_node}', 1, 0, row_span=1, column_span=3, padx=0, pady=0)
+        self.tertiary_menu = self.parent.add_scroll_menu(f'3. Details for node {current_node}', 1, 0, row_span=1, column_span=3)
+
+        nid = [f'   node type: {nodeArray[current_node]["nodeType"]}']
+        nid.append(f'architecture: {nodeArray[current_node]["arch"]}')
+        nid.append(f'    services: {nodeArray[current_node]["runningServices"]}')
+        nid.append(f'   heartbeat: {nodeArray[current_node]["lastHeartbeat"]}')
+
+        self.tertiary_menu.add_item_list(nid)
+
 
 def main():
     root = py_cui.PyCUI(2, 3)
