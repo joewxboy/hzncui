@@ -5,6 +5,7 @@ Created: 2022-02-19
 """
 
 
+from curses import wrapper
 import py_cui, requests, json, os
 
 __version__ = '0.0.1'
@@ -35,31 +36,44 @@ class hzncuiApp:
 
         self.secondary_menu = self.parent.add_scroll_menu('2. Choose a node to see details', 0, 1, row_span=1, column_span=2)
         self.secondary_menu.set_selected_color(py_cui.BLACK_ON_YELLOW)
+        self.secondary_menu.set_on_selection_change_event(hzncuiApp.drawThirdMenu)
 
         # create a list of IDs from the list of edge node dicts
 
         lid = []
-        nodeArray = {}
+        self.nodeArray = {}
         for d in data:
             lid.append(d["id"])
-            nodeArray[d["id"]] = d
+            self.nodeArray[d["id"]] = d
 
         # put the list of IDs into the node details CUI widget
 
         self.secondary_menu.add_item_list(lid)
 
-        # create the detail box
+        # initialize the detail box
 
         current_node = self.secondary_menu.get()
-        self.tertiary_menu = self.parent.add_scroll_menu(f'3. Details for node {current_node}', 1, 0, row_span=1, column_span=3)
+        self.tertiary_menu = self.parent.add_scroll_menu('placeholder', 1, 0, row_span=1, column_span=3)
 
-        nid = [f'   node type: {nodeArray[current_node]["nodeType"]}']
-        nid.append(f'architecture: {nodeArray[current_node]["arch"]}')
-        nid.append(f'    services: {nodeArray[current_node]["runningServices"]}')
-        nid.append(f'   heartbeat: {nodeArray[current_node]["lastHeartbeat"]}')
+        hzncuiApp.self = self
 
+        hzncuiApp.drawThirdMenu(current_node)
+
+
+    def drawThirdMenu(current_node):
+
+        self = hzncuiApp.self
+        
+        # create the detail box
+
+        nid = [f'   node type: {self.nodeArray[current_node]["nodeType"]}']
+        nid.append(f'architecture: {self.nodeArray[current_node]["arch"]}')
+        nid.append(f'    services: {self.nodeArray[current_node]["runningServices"]}')
+        nid.append(f'   heartbeat: {self.nodeArray[current_node]["lastHeartbeat"]}')
+
+        self.tertiary_menu.set_title(f'3. Details for node {current_node}')
+        self.tertiary_menu.clear()
         self.tertiary_menu.add_item_list(nid)
-
 
 def main():
     root = py_cui.PyCUI(2, 3)
