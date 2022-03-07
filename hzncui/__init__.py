@@ -14,6 +14,8 @@ class hzncuiApp:
 
     def __init__(self, parent):
 
+        hzncuiApp.self = self
+
         self.parent = parent
 
         # read Open Horizon configuration from environment variables
@@ -54,8 +56,6 @@ class hzncuiApp:
 
         current_node = self.secondary_menu.get()
         self.tertiary_menu = self.parent.add_scroll_menu('placeholder', 1, 0, row_span=1, column_span=3)
-
-        hzncuiApp.self = self
 
         hzncuiApp.drawThirdMenu(current_node)
 
