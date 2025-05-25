@@ -45,9 +45,10 @@ class hzncuiApp:
             # create a list of IDs from the list of edge node dicts
             lid = []
             self.nodeArray = {}
-            for d in data:
-                lid.append(d["id"])
-                self.nodeArray[d["id"]] = d
+            for node in data:  # data is a list of node dictionaries
+                node_id = node["id"]
+                lid.append(node_id)
+                self.nodeArray[node_id] = node
 
             # put the list of IDs into the node details CUI widget
             self.secondary_menu.add_item_list(lid)
@@ -63,15 +64,25 @@ class hzncuiApp:
             self.primary_menu = self.parent.add_scroll_menu('Error', 0, 0, row_span=2, column_span=3)
             self.primary_menu.add_item_list([str(e)])
             self.primary_menu.set_selected_color(py_cui.RED_ON_BLACK)
+        except Exception as e:
+            # Display any other errors in the UI
+            self.primary_menu = self.parent.add_scroll_menu('Error', 0, 0, row_span=2, column_span=3)
+            self.primary_menu.add_item_list([f"Error: {str(e)}"])
+            self.primary_menu.set_selected_color(py_cui.RED_ON_BLACK)
 
     def drawThirdMenu(current_node):
         self = hzncuiApp.self
         
         # create the detail box
-        nid = [f'   node type: {self.nodeArray[current_node]["nodeType"]}']
-        nid.append(f'architecture: {self.nodeArray[current_node]["arch"]}')
-        nid.append(f'    services: {self.nodeArray[current_node]["runningServices"]}')
-        nid.append(f'   heartbeat: {self.nodeArray[current_node]["lastHeartbeat"]}')
+        node = self.nodeArray[current_node]
+        nid = [
+            f'   node type: {node["nodeType"]}',
+            f'architecture: {node["arch"]}',
+            f'    services: {node["runningServices"]}',
+            f'   heartbeat: {node["lastHeartbeat"]}',
+            f'      owner: {node["owner"]}',
+            f'       name: {node["name"]}'
+        ]
 
         self.tertiary_menu.set_title(f'3. Details for node {current_node}')
         self.tertiary_menu.clear()
