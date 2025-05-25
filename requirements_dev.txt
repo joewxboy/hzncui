@@ -1,3 +1,4 @@
 py_cui
 pytest
 requests
+setuptools
