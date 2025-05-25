@@ -1,4 +1,8 @@
-"""Main TUI implementation for Open Horizon Management Hub CUI
+"""Main TUI implementation for Open Horizon Management Hub CUI.
+
+This module provides a Text User Interface (TUI) for managing Open Horizon Management Hub.
+It allows users to view and manage nodes, services, patterns, policies, organizations, and users
+through an interactive command-line interface.
 
 Author: Joe Pearson  
 Created: 2022-02-19
@@ -7,6 +11,7 @@ Created: 2022-02-19
 from curses import wrapper
 import py_cui, requests, json
 import logging
+from typing import List, Dict, Any, Optional
 from .config import load_config, get_config, ConfigError
 
 __version__ = '0.0.1'
@@ -19,8 +24,26 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class hzncuiApp:
+    """Main application class for the Open Horizon CUI.
+    
+    This class handles the TUI interface and interaction with the Open Horizon API.
+    It provides menus for navigating different aspects of the Open Horizon Management Hub
+    and displays detailed information about selected items.
+    
+    Attributes:
+        parent: The parent PyCUI instance
+        primary_menu: Menu for selecting main categories
+        secondary_menu: Menu for selecting specific items
+        tertiary_menu: Menu for displaying item details
+        nodeArray: Dictionary mapping node IDs to their details
+    """
 
-    def __init__(self, parent):
+    def __init__(self, parent: py_cui.PyCUI) -> None:
+        """Initialize the CUI application.
+        
+        Args:
+            parent: The parent PyCUI instance that manages the TUI
+        """
         hzncuiApp.self = self
         self.parent = parent
 
@@ -59,17 +82,18 @@ class hzncuiApp:
                 logger.error(f"Expected list of nodes, got {type(data)}")
                 raise ValueError("Invalid response format: expected list of nodes")
 
+            # Initialize main menu
             li = ['Nodes', 'Services', 'Patterns', 'Policies', 'Orgs', 'Users']
             self.primary_menu = self.parent.add_scroll_menu('1. Choose an item', 0, 0, row_span=1, column_span=1)
             self.primary_menu.set_selected_color(py_cui.BLACK_ON_YELLOW)
             self.primary_menu.add_item_list(li)
 
-            # create the CUI widget for displaying node details
+            # Initialize node details menu
             self.secondary_menu = self.parent.add_scroll_menu('2. Choose a node to see details', 0, 1, row_span=1, column_span=2)
             self.secondary_menu.set_selected_color(py_cui.BLACK_ON_YELLOW)
             self.secondary_menu.set_on_selection_change_event(hzncuiApp.drawThirdMenu)
 
-            # create a list of IDs from the list of edge node dicts
+            # Process node data
             lid = []
             self.nodeArray = {}
             
@@ -94,10 +118,10 @@ class hzncuiApp:
             if not lid:
                 raise ValueError("No valid nodes found in response")
 
-            # put the list of IDs into the node details CUI widget
+            # Initialize node list
             self.secondary_menu.add_item_list(lid)
 
-            # initialize the detail box
+            # Initialize details display
             current_node = self.secondary_menu.get()
             self.tertiary_menu = self.parent.add_scroll_menu('placeholder', 1, 0, row_span=1, column_span=3)
 
@@ -116,16 +140,23 @@ class hzncuiApp:
             self.primary_menu.add_item_list([f"Error: {str(e)}"])
             self.primary_menu.set_selected_color(py_cui.RED_ON_BLACK)
 
-    def drawThirdMenu(current_node):
+    @staticmethod
+    def drawThirdMenu(current_node: str) -> None:
+        """Display detailed information about the selected node.
+        
+        Args:
+            current_node: The ID of the node to display details for
+        """
         self = hzncuiApp.self
         
         try:
-            # create the detail box
+            # Get node details
             node = self.nodeArray.get(current_node)
             if not node:
                 logger.error(f"Node {current_node} not found in nodeArray")
                 return
                 
+            # Format node details
             nid = [
                 f'   node type: {node.get("nodeType", "N/A")}',
                 f'architecture: {node.get("arch", "N/A")}',
@@ -135,6 +166,7 @@ class hzncuiApp:
                 f'       name: {node.get("name", "N/A")}'
             ]
 
+            # Update display
             self.tertiary_menu.set_title(f'3. Details for node {current_node}')
             self.tertiary_menu.clear()
             self.tertiary_menu.add_item_list(nid)
@@ -143,7 +175,8 @@ class hzncuiApp:
             self.tertiary_menu.clear()
             self.tertiary_menu.add_item_list([f"Error displaying node details: {str(e)}"])
 
-def main():
+def main() -> None:
+    """Initialize and start the CUI application."""
     root = py_cui.PyCUI(2, 3)
     root.set_title(f'Open Horizon Management Hub CUI v{__version__}')
     wrapper = hzncuiApp(root)
