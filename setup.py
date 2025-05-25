@@ -15,7 +15,7 @@ setup(
     author="Joe Pearson",
     author_email="joe.pearson@us.ibm.com",
     description="Commandline UI for Open Horizon",
-    license="",
+    license="Apache 2.0",
     keywords="",
     url="https://github.com/joewxboy/hzncui",
     long_description=long_description,

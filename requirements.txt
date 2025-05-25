@@ -1,2 +1,4 @@
 py_cui
 requests
+setuptools
+python-dotenv>=1.0.0
