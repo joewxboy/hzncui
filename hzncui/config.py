@@ -6,7 +6,7 @@ and .env files.
 
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Tuple
 from dotenv import load_dotenv
 import logging
 
@@ -39,6 +39,26 @@ def find_env_file() -> Optional[Path]:
     logger.debug("No .env file found in any of the expected locations")
     return None
 
+def get_env_value(key: str) -> Tuple[Optional[str], str]:
+    """Get a value from environment variables and determine its source.
+    
+    Args:
+        key: The environment variable key to check
+        
+    Returns:
+        Tuple of (value, source) where source is either 'env' or 'dotenv'
+    """
+    # First check if it's in os.environ directly
+    if key in os.environ:
+        return os.environ[key], 'env'
+    
+    # Then check if it's in the dotenv environment
+    if hasattr(os.environ, '_data'):
+        if key in os.environ._data:
+            return os.environ._data[key], 'dotenv'
+    
+    return None, 'not_found'
+
 def load_config() -> None:
     """Load configuration from .env file and environment variables.
     
@@ -51,13 +71,20 @@ def load_config() -> None:
     env_path = find_env_file()
     if env_path:
         logger.info(f"Loading configuration from {env_path}")
-        load_dotenv(env_path)
+        load_dotenv(env_path, override=True)  # Added override=True to ensure .env values take precedence
     else:
         logger.info("No .env file found, using environment variables")
     
     # Validate required configuration
     required_vars = ['HZN_ORG_ID', 'HZN_EXCHANGE_URL', 'EXCHANGE_USER_ADMIN_PW']
-    missing_vars = [var for var in required_vars if not os.getenv(var)]
+    missing_vars = []
+    
+    for var in required_vars:
+        value, source = get_env_value(var)
+        if value is None:
+            missing_vars.append(var)
+        else:
+            logger.info(f"Configuration {var} loaded from {source}")
     
     if missing_vars:
         raise ConfigError(
@@ -78,7 +105,12 @@ def get_config(key: str, default: Optional[str] = None) -> str:
     Raises:
         ConfigError: If the key is required but not found
     """
-    value = os.getenv(key, default)
+    value, source = get_env_value(key)
     if value is None:
+        if default is not None:
+            logger.info(f"Using default value for {key}")
+            return default
         raise ConfigError(f"Required configuration '{key}' not found")
+    
+    logger.debug(f"Retrieved {key} from {source}")
     return value 

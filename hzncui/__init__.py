@@ -12,7 +12,10 @@ from .config import load_config, get_config, ConfigError
 __version__ = '0.0.1'
 
 # Set up logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 class hzncuiApp:
@@ -23,12 +26,17 @@ class hzncuiApp:
 
         try:
             # Load and validate configuration
+            logger.info("Loading configuration...")
             load_config()
             
             # Get configuration values
+            logger.info("Retrieving configuration values...")
             hzn_org_id = get_config('HZN_ORG_ID')
             exchange_user_admin_pw = get_config('EXCHANGE_USER_ADMIN_PW')
             hzn_exchange_url = get_config('HZN_EXCHANGE_URL')
+            
+            logger.info(f"Using Exchange URL: {hzn_exchange_url}")
+            logger.info(f"Using Organization ID: {hzn_org_id}")
             
             # retrieve data from the configured Open Horizon Exchange
             r = requests.get(
@@ -97,6 +105,7 @@ class hzncuiApp:
             
         except ConfigError as e:
             # Display configuration error in the UI
+            logger.error(f"Configuration error: {e}")
             self.primary_menu = self.parent.add_scroll_menu('Error', 0, 0, row_span=2, column_span=3)
             self.primary_menu.add_item_list([str(e)])
             self.primary_menu.set_selected_color(py_cui.RED_ON_BLACK)
