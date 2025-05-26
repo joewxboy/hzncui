@@ -87,6 +87,7 @@ class hzncuiApp:
             self.primary_menu = self.parent.add_scroll_menu('1. Choose an item', 0, 0, row_span=1, column_span=1)
             self.primary_menu.set_selected_color(py_cui.BLACK_ON_YELLOW)
             self.primary_menu.add_item_list(li)
+            self.primary_menu.set_on_selection_change_event(self.on_primary_menu_selection)
 
             # Initialize node details menu
             self.secondary_menu = self.parent.add_scroll_menu('2. Choose a node to see details', 0, 1, row_span=1, column_span=2)
@@ -174,6 +175,178 @@ class hzncuiApp:
             logger.error(f"Error drawing third menu: {e}", exc_info=True)
             self.tertiary_menu.clear()
             self.tertiary_menu.add_item_list([f"Error displaying node details: {str(e)}"])
+
+    def fetch_services(self) -> None:
+        """Fetch services from the Open Horizon Exchange and display them in the TUI.
+        If the API returns an empty list, it is treated as a valid response.
+        """
+        try:
+            r = requests.get(
+                f'{get_config("HZN_EXCHANGE_URL")}/orgs/{get_config("HZN_ORG_ID")}/services',
+                auth=(f'{get_config("HZN_ORG_ID")}/admin', get_config('EXCHANGE_USER_ADMIN_PW'))
+            )
+            r.raise_for_status()
+            response = r.json()
+            services = response.get('services', {})
+            if not services:
+                logger.info("No services found.")
+                self.secondary_menu.clear()
+                self.secondary_menu.add_item_list(["No services available."])
+                return
+            service_ids = list(services.keys())
+            self.secondary_menu.clear()
+            self.secondary_menu.add_item_list(service_ids)
+            self.serviceArray = services
+        except Exception as e:
+            logger.error(f"Error fetching services: {e}")
+            self.secondary_menu.clear()
+            self.secondary_menu.add_item_list([f"Error fetching services: {str(e)}"])
+
+    def draw_service_details(self, service_id: str) -> None:
+        """Display detailed information about the selected service.
+        
+        Args:
+            service_id: The ID of the service to display details for
+        """
+        service = self.serviceArray.get(service_id)
+        if not service:
+            logger.error(f"Service {service_id} not found in serviceArray")
+            return
+        details = [
+            f'   service type: {service.get("serviceType", "N/A")}',
+            f'   version: {service.get("version", "N/A")}',
+            f'   owner: {service.get("owner", "N/A")}',
+            f'   name: {service.get("name", "N/A")}'
+        ]
+        self.tertiary_menu.set_title(f'3. Details for service {service_id}')
+        self.tertiary_menu.clear()
+        self.tertiary_menu.add_item_list(details)
+
+    def fetch_patterns(self) -> None:
+        """Fetch patterns from the Open Horizon Exchange and display them in the TUI.
+        If the API returns an empty list, it is treated as a valid response.
+        """
+        try:
+            r = requests.get(
+                f'{get_config("HZN_EXCHANGE_URL")}/orgs/{get_config("HZN_ORG_ID")}/patterns',
+                auth=(f'{get_config("HZN_ORG_ID")}/admin', get_config('EXCHANGE_USER_ADMIN_PW'))
+            )
+            r.raise_for_status()
+            response = r.json()
+            patterns = response.get('patterns', {})
+            if not patterns:
+                logger.info("No patterns found.")
+                self.secondary_menu.clear()
+                self.secondary_menu.add_item_list(["No patterns available."])
+                return
+            pattern_ids = list(patterns.keys())
+            self.secondary_menu.clear()
+            self.secondary_menu.add_item_list(pattern_ids)
+            self.patternArray = patterns
+        except Exception as e:
+            logger.error(f"Error fetching patterns: {e}")
+            self.secondary_menu.clear()
+            self.secondary_menu.add_item_list([f"Error fetching patterns: {str(e)}"])
+
+    def draw_pattern_details(self, pattern_id: str) -> None:
+        """Display detailed information about the selected pattern.
+        
+        Args:
+            pattern_id: The ID of the pattern to display details for
+        """
+        pattern = self.patternArray.get(pattern_id)
+        if not pattern:
+            logger.error(f"Pattern {pattern_id} not found in patternArray")
+            return
+        details = [
+            f'   label: {pattern.get("label", "N/A")}',
+            f'   description: {pattern.get("description", "N/A")}',
+            f'   owner: {pattern.get("owner", "N/A")}',
+            f'   public: {pattern.get("public", "N/A")}',
+            f'   lastUpdated: {pattern.get("lastUpdated", "N/A")}'
+        ]
+        self.tertiary_menu.set_title(f'3. Details for pattern {pattern_id}')
+        self.tertiary_menu.clear()
+        self.tertiary_menu.add_item_list(details)
+
+    def on_primary_menu_selection(self, selected_item: str) -> None:
+        """Handle selection change in the primary menu.
+        
+        Args:
+            selected_item: The selected item from the primary menu
+        """
+        if selected_item == 'Services':
+            self.secondary_menu.set_title('2. Choose a service to see details')
+            self.tertiary_menu.set_title('3. Details for service')
+            self.tertiary_menu.clear()
+            self.fetch_services()
+            # Automatically show details for the first service if available
+            if self.serviceArray:
+                first_service_id = next(iter(self.serviceArray))
+                self.draw_service_details(first_service_id)
+        elif selected_item == 'Nodes':
+            self.secondary_menu.set_title('2. Choose a node to see details')
+            self.tertiary_menu.set_title('3. Details for node')
+            self.tertiary_menu.clear()
+            self.fetch_nodes()
+            if self.nodeArray:
+                first_node_id = next(iter(self.nodeArray))
+                self.draw_node_details(first_node_id)
+        elif selected_item == 'Patterns':
+            self.secondary_menu.set_title('2. Choose a pattern to see details')
+            self.tertiary_menu.set_title('3. Details for pattern')
+            self.tertiary_menu.clear()
+            self.fetch_patterns()
+            if self.patternArray:
+                first_pattern_id = next(iter(self.patternArray))
+                self.draw_pattern_details(first_pattern_id)
+
+    def fetch_nodes(self) -> None:
+        """Fetch nodes from the Open Horizon Exchange and display them in the TUI.
+        If the API returns an empty list, it is treated as a valid response.
+        """
+        try:
+            r = requests.get(
+                f'{get_config("HZN_EXCHANGE_URL")}/orgs/{get_config("HZN_ORG_ID")}/node-details',
+                auth=(f'{get_config("HZN_ORG_ID")}/admin', get_config('EXCHANGE_USER_ADMIN_PW'))
+            )
+            r.raise_for_status()
+            nodes = r.json()
+            if not nodes:
+                logger.info("No nodes found.")
+                self.secondary_menu.clear()
+                self.secondary_menu.add_item_list(["No nodes available."])
+                return
+            node_ids = [node.get("id", "Unknown") for node in nodes]
+            self.secondary_menu.clear()
+            self.secondary_menu.add_item_list(node_ids)
+            self.nodeArray = {node.get("id"): node for node in nodes}
+        except Exception as e:
+            logger.error(f"Error fetching nodes: {e}")
+            self.secondary_menu.clear()
+            self.secondary_menu.add_item_list([f"Error fetching nodes: {str(e)}"])
+
+    def draw_node_details(self, node_id: str) -> None:
+        """Display detailed information about the selected node.
+        
+        Args:
+            node_id: The ID of the node to display details for
+        """
+        node = self.nodeArray.get(node_id)
+        if not node:
+            logger.error(f"Node {node_id} not found in nodeArray")
+            return
+        details = [
+            f'   node type: {node.get("nodeType", "N/A")}',
+            f'architecture: {node.get("arch", "N/A")}',
+            f'    services: {node.get("runningServices", "N/A")}',
+            f'   heartbeat: {node.get("lastHeartbeat", "N/A")}',
+            f'      owner: {node.get("owner", "N/A")}',
+            f'       name: {node.get("name", "N/A")}'
+        ]
+        self.tertiary_menu.set_title(f'3. Details for node {node_id}')
+        self.tertiary_menu.clear()
+        self.tertiary_menu.add_item_list(details)
 
 def main() -> None:
     """Initialize and start the CUI application."""
