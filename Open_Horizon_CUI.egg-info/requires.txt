@@ -1,5 +1,0 @@
-py_cui
-requests
-
-[test]
-pytest
