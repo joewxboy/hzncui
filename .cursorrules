@@ -1,0 +1,8 @@
+Do not begin working on a task if there are uncommitted changes.
+Before beginning a task, open an issue for the work and prefix the issue title with the issue number in the format [Issue #: ] where "#" is the issue number.
+Assign the issue to me.
+Label the issue with an appropriate label.  If unsure, ask.
+Create a local branch named after the issue number in the format [issue-#].
+When the task is complete to my satisfaction, commit the files with the "-s" sign-off flag.  The commit message should be prefixed with [Issue #: ].
+Push the changes to origin.
+Open a PR with the same prefix.
