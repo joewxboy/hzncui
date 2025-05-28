@@ -61,6 +61,19 @@ class hzncuiApp:
             logger.info(f"Using Exchange URL: {hzn_exchange_url}")
             logger.info(f"Using Organization ID: {hzn_org_id}")
             
+            # Validate credentials before proceeding
+            logger.info("Validating credentials...")
+            try:
+                r = requests.get(
+                    f'{hzn_exchange_url}/orgs/{hzn_org_id}/users/admin',
+                    auth=(f'{hzn_org_id}/admin', exchange_user_admin_pw)
+                )
+                r.raise_for_status()
+                logger.info("Credentials validated successfully")
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Credential validation failed: {str(e)}")
+                raise ValueError(f"Invalid credentials: {str(e)}")
+            
             # retrieve data from the configured Open Horizon Exchange
             r = requests.get(
                 f'{hzn_exchange_url}/orgs/{hzn_org_id}/node-details',
@@ -74,6 +87,13 @@ class hzncuiApp:
                 data = json.loads(r.text)
                 logger.debug(f"Parsed data type: {type(data)}")
                 logger.debug(f"Parsed data: {data}")
+                
+                # Check for error response
+                if isinstance(data, dict) and ('code' in data or 'msg' in data):
+                    error_msg = data.get('msg', 'Unknown error')
+                    logger.error(f"API Error: {error_msg}")
+                    raise ValueError(f"API Error: {error_msg}")
+                
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse JSON response: {e}")
                 raise
